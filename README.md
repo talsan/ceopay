@@ -1,5 +1,4 @@
-# Source and Structure Executive Compensation from SEC Disclosures
-
+# SOURCING & STRUCTURING EXECUTIVE COMPENSATION FROM SEC DISCLOSURES
 ### Process Overview
 1. **Download Index Files**: critical metadata for each Edgar filing (company name, filing date, filing url, etc.) 
 2. **Extract Filing Header**: additional metadata *inside* each filing
