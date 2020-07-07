@@ -8,6 +8,7 @@
 5. **Parse Table Contents** into consistently structured json files
 
 ### Process Architecture
+![Process Architecture](https://github.com/talsan/ceopay/blob/master/resources/img/DEF14A%20Data%20Flow.png?raw=true)
 
 ### Process Details
 #### 1. Download Index Files
