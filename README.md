@@ -9,11 +9,10 @@
 1. **Detect Compensation Table**: Machine Learning algorithms find the compensation table out of 100s of random/noisy tables in the raw DEF14A document
 2. **Parse Table Contents**: Messy and inconsistent raw HTML tables get translated into structured JSON objects with Salary details (total, base, bonus, options, etc.)
 
-##### Features
-- Event-driven architecture
+#### Features
 - Can be run locally or on AWS (requires S3, Athena, Lambda)
 - Multiprocessing can be toggled on/off
-- If S3/Athena is configured, batch scripts keep everything updated and in Sync
+- Batch scripts are available to keep it fully synced with Edgar updates (requires S3/Athena configuration)
 
 ### Process Architecture
 ![Process Architecture](https://github.com/talsan/ceopay/blob/master/resources/img/DEF14A%20Data%20Flow.png?raw=true)
