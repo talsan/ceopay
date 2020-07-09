@@ -20,6 +20,7 @@
 ### Process Details
 #### 1. Download Index Files
 ##### `idx_downloader.py`
+##### Inputs: 
 ```
 usage: idx_downloader.py [-h] [--local_output LOCAL_OUTPUT] yyyyqq
 
@@ -41,6 +42,7 @@ Local naming convention: `./ceopay/data/masteridx/year=2020/qtr=1.txt`
 
 #### 2. Extract Filing Header
 ##### `hdr_extractor.py`
+##### Inputs: 
 ```
 usage: hdr_extractor.py [-h] [--local_output LOCAL_OUTPUT] yyyyqq formtype
 
