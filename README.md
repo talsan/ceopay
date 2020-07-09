@@ -1,4 +1,4 @@
-# SOURCING & STRUCTURING EXECUTIVE COMPENSATION FROM SEC DISCLOSURES
+# Source & Structure Executive Compensation from SEC Edgar
 ### Process Overview
 #### Generalized for any Edgar Document (10-K, 10-Q, DEF 14A, etc.)
 1. **Download Master Index Files**: process critical lookup index for each Edgar filing (company name, filing date, filing url, etc.) 
