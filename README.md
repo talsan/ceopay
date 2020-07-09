@@ -1,4 +1,4 @@
-# Source & Structure Executive Compensation from SEC Edgar
+# Source & Structure Executive Compensation from SEC Edgar Filings
 ## Process Overview
 #### Generalized for any Edgar Document (10-K, 10-Q, DEF 14A, etc.)
 1. **Download Master Index Files**: process critical lookup index for each Edgar filing (company name, filing date, filing url, etc.) 
@@ -9,16 +9,19 @@
 1. **Detect Compensation Table**: Random Forest classifier finds the compensation table out of 100s of random/noisy tables in the raw DEF14A document
 2. **Parse Table Contents**: Messy and inconsistent raw HTML tables get translated into structured JSON objects with Salary details (total, base, bonus, options, etc.)
 
-#### Features
-- Can be run locally or on AWS (requires S3, Athena, Lambda)
+#### Features & Options
+- Event-driven design - each process step [1 through 5] is broken out into two scripts:
+  1. a self-contained event processor (e.g. idx_downloader.py)
+  2. a batch process that queues & invokes a series of events (e.g. batch_idx_downloader.py). Note that the batch process requires (AWS S3/Athena Configuration).
+- Multiple output options: Local directories or S3
 - Multiprocessing can be toggled on/off via [`config.py`](https://github.com/talsan/ceopay/blob/master/config.py)
-- Batch scripts are available to keep it fully synced with Edgar updates (requires S3/Athena configuration)
+- Designed to work as a script (via CLI) or as an imported module within Python
 
 ## Process Architecture
 ![Process Architecture](https://github.com/talsan/ceopay/blob/master/resources/img/DEF14A%20Data%20Flow.png?raw=true)
 
 ## Process Details
-### 1. Download Index Files
+### 1. Download Master Index Files
 ##### `idx_downloader.py`
 ##### Inputs: 
 ```
@@ -40,7 +43,7 @@ optional arguments:
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/masteridx/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/masteridx/year=2020/qtr=1.txt`  
 
-### 2. Extract Filing Header
+### 2. Extract Filing Headers
 ##### `hdr_extractor.py`
 ##### Inputs: 
 ```
