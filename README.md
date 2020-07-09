@@ -6,12 +6,12 @@
 3. **Download Filings**: in this case, the annual proxy filings (`formtype="DEF 14A"`) 
 
 #### Specific to Executive Compensation (Form DEF 14A)
-1. **Detect Compensation Table**: Machine Learning algorithms find the compensation table out of 100s of random/noisy tables in the raw DEF14A document
+1. **Detect Compensation Table**: Random Forest classifier finds the compensation table out of 100s of random/noisy tables in the raw DEF14A document
 2. **Parse Table Contents**: Messy and inconsistent raw HTML tables get translated into structured JSON objects with Salary details (total, base, bonus, options, etc.)
 
 #### Features
 - Can be run locally or on AWS (requires S3, Athena, Lambda)
-- Multiprocessing can be toggled on/off
+- Multiprocessing can be toggled on/off via [`config.py`](https://github.com/talsan/ceopay/blob/master/config.py)
 - Batch scripts are available to keep it fully synced with Edgar updates (requires S3/Athena configuration)
 
 ### Process Architecture
@@ -35,7 +35,7 @@ optional arguments:
                         config.py)
 ```
 ##### Outputs:
-[Output Example](https://github.com/talsan/ceopay/blob/master/data/masteridx/year%3D2020/qtr%3D2.txt)
+[Output Example](https://github.com/talsan/ceopay/blob/master/data/masteridx/year%3D2020/qtr%3D2.txt)  
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/masteridx/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/masteridx/year=2020/qtr=1.txt`  
 
@@ -58,6 +58,6 @@ optional arguments:
                         config.py)
 ```
 ##### Outputs:
-[Output Example](https://github.com/talsan/ceopay/blob/master/data/filing_metadata/formtype%3Ddef14a/year%3D2020/qtr%3D2.txt)
+[Output Example](https://github.com/talsan/ceopay/blob/master/data/filing_metadata/formtype%3Ddef14a/year%3D2020/qtr%3D2.txt)  
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/filing_metadata/formtype=def14a/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/filing_metadata/formtype=def14a/year=2020/qtr=1.txt`  
