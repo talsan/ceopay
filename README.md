@@ -1,5 +1,5 @@
 # Source & Structure Executive Compensation from SEC Edgar
-### Process Overview
+## Process Overview
 #### Generalized for any Edgar Document (10-K, 10-Q, DEF 14A, etc.)
 1. **Download Master Index Files**: process critical lookup index for each Edgar filing (company name, filing date, filing url, etc.) 
 2. **Extract Filing Headers**: additional filing metadata (contents within filing's `<SEC_HEADER>` tag)
@@ -14,11 +14,11 @@
 - Multiprocessing can be toggled on/off via [`config.py`](https://github.com/talsan/ceopay/blob/master/config.py)
 - Batch scripts are available to keep it fully synced with Edgar updates (requires S3/Athena configuration)
 
-### Process Architecture
+## Process Architecture
 ![Process Architecture](https://github.com/talsan/ceopay/blob/master/resources/img/DEF14A%20Data%20Flow.png?raw=true)
 
-### Process Details
-#### 1. Download Index Files
+## Process Details
+### 1. Download Index Files
 ##### `idx_downloader.py`
 ##### Inputs: 
 ```
@@ -40,7 +40,7 @@ optional arguments:
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/masteridx/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/masteridx/year=2020/qtr=1.txt`  
 
-#### 2. Extract Filing Header
+### 2. Extract Filing Header
 ##### `hdr_extractor.py`
 ##### Inputs: 
 ```
