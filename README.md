@@ -35,9 +35,9 @@ optional arguments:
                         config.py)
 ```
 ##### Outputs:
+[Output Example](https://github.com/talsan/ceopay/blob/master/data/masteridx/year%3D2020/qtr%3D2.txt)
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/masteridx/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/masteridx/year=2020/qtr=1.txt`  
-[File Contents Sample] (https://github.com/talsan/ceopay/blob/master/data/masteridx/year%3D2020/qtr%3D2.txt)
 
 #### 2. Extract Filing Header
 ##### `hdr_extractor.py`
@@ -58,6 +58,6 @@ optional arguments:
                         config.py)
 ```
 ##### Outputs:
+[Output Example](https://github.com/talsan/ceopay/blob/master/data/filing_metadata/formtype%3Ddef14a/year%3D2020/qtr%3D2.txt)
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/filing_metadata/formtype=def14a/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/filing_metadata/formtype=def14a/year=2020/qtr=1.txt`  
-[File Contents Sample](https://github.com/talsan/ceopay/blob/master/data/filing_metadata/formtype%3Ddef14a/year%3D2020/qtr%3D2.txt)
