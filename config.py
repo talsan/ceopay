@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Local:
+    MULTIPROCESS_ON = True
     MULTIPROCESS_CPUS = None # None defaults to mp.cpu_count()
+
 
 class Aws:
     ACCESS_KEY = os.environ.get('ACCESS_KEY')

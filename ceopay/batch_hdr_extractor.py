@@ -25,7 +25,7 @@ def get_unprocessed_yq_pairs(bucket: str, prefix: str) -> list:
     return unprocessed_yq_pairs
 
 
-def build_queue(formtype: str, overwrite: bool, output_to_local: bool) -> list:
+def build_yq_queue(formtype: str, overwrite: bool) -> list:
     if overwrite:
         yq_pair_queue = helpers.get_s3_yq_pairs(session,
                                                 bucket=Aws.OUPUT_BUCKET,
@@ -34,10 +34,7 @@ def build_queue(formtype: str, overwrite: bool, output_to_local: bool) -> list:
         yq_pair_queue = get_unprocessed_yq_pairs(bucket=Aws.OUPUT_BUCKET,
                                                  prefix=f'filing_metadata/formtype={helpers.s3_nameify(formtype)}/')
 
-    input_params_queue = [{'formtype': args.formtype, 'yq_pair': yq_pair,
-                           'multiprocess': args.multiprocess, 'output_to_local': output_to_local}
-                          for yq_pair in yq_pair_queue]
-    return input_params_queue
+    return yq_pair_queue
 
 
 def main(input_params_queue: list) -> None:
@@ -47,14 +44,14 @@ def main(input_params_queue: list) -> None:
 
 if __name__ == "__main__":
     # command line arguments
-    parser = argparse.ArgumentParser(description='Extract Raw ETF Holding Files')
-    parser.add_argument('formtype', help=f'which formtype (10K, 10Q, DEF 14A, etc.) metadata do you wish to extract')
-    parser.add_argument('--overwrite', help=f'Overwrite holdings that have already been downloaded to S3',
+    parser = argparse.ArgumentParser(description='batch extract metadata from filings '
+                                                 'w/ option to update or overwrite existing extracts in S3')
+    parser.add_argument('formtype',help='eg "DEF 14A", "10-K", "10-Q", etc', type=str)
+    parser.add_argument('--overwrite', help=f'overwrite filing headers that have previously been extracted and loaded into S3',
                         action='store_true')
-    parser.add_argument('--multiprocess', help=f'use machines additional cores for multiprocessing',
-                        action='store_true')
-    parser.add_argument('--output_to_local', help=f'output files to local "../data/" directory (meant for testing)',
-                        action='store_true')
+    parser.add_argument('--local_output', help=f'where to send output on local machine; defaults to \'s3\', which '
+                                               f'uploads to the config.Aws.OUPUT_BUCKET defined in config.py)', type=str, default='s3')
+
     args = parser.parse_args()
 
     this_file = os.path.basename(__file__).replace('.py', '')
@@ -62,6 +59,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=f'../log/{log_id}.log', level=logging.INFO,
                         format=f'%(asctime)s - %(name)s - %(levelname)s - {args.formtype} - %(message)s')
 
-    input_params_queue = build_queue(args.formtype, args.overwrite, args.output_to_local)
-
+    yq_queue = build_yq_queue(args.formtype, args.overwrite)
+    input_params_queue = [{'formtype': args.formtype, 'yyyyqq': yyyyqq,'local_output': args.local_output}
+                          for yyyyqq in yq_queue]
     main(input_params_queue)

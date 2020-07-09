@@ -9,6 +9,7 @@ from datetime import datetime
 import multiprocessing as mp
 import logging
 import os
+import argparse
 
 # todo improve logging across multiprocessors
 
@@ -47,26 +48,27 @@ def request_raw_filing_header_text(file_loc: str) -> str:
             return filing_header_search.group()
 
 
-def listofdict_to_csvio(filing_headers: list) -> StringIO:
+def list_to_filestr(filing_headers: list) -> str:
     filing_headers_df = pd.DataFrame(filing_headers)
     metadata_csv_file = StringIO()
     filing_headers_df.to_csv(metadata_csv_file, sep='|', index=False, header=True, line_terminator='\n')
-    return metadata_csv_file
+    return metadata_csv_file.getvalue()
 
 
-def upload_metadata_csv(key: str, metadata_file: StringIO,  output_to_local: bool) -> None:
-    if output_to_local:
-        output_path = f'../data/{key}'
+def upload_metadata_csv(key: str, filestring: str,  local_output: str) -> None:
+
+    if local_output == 's3':
+        s3 = session.client('s3')
+        s3.put_object(Body=filestring, Bucket=Aws.OUPUT_BUCKET, Key=key)
+        log.info(f'pid[{mp.current_process().pid}] wrote {key} to s3')
+
+    else:
+        output_path = f'{local_output.rstrip("/")}/{key}'
         if not os.path.exists(os.path.dirname(output_path)):
             os.makedirs(os.path.dirname(output_path))
         with open(output_path, 'w') as f:
-            f.write(metadata_file.getvalue())
+            f.write(filestring)
         log.info(f'pid[{mp.current_process().pid}] wrote locally to: ./data/{key}')
-
-    else:
-        s3 = session.client('s3')
-        s3.put_object(Body=metadata_file.getvalue(), Bucket=Aws.OUPUT_BUCKET, Key=key)
-        log.info(f'pid[{mp.current_process().pid}] wrote {key} to s3')
 
 
 def extract_filing_header(input_param: dict) -> dict:
@@ -99,10 +101,10 @@ def get_filing_idx(formtype: str, year: str, qtr: str) -> pd.DataFrame:
     return filing_idx
 
 
-def main(formtype: str, yq_pair: str, output_to_local: bool, multiprocess: bool) -> None:
+def main(yyyyqq: str, formtype: str, local_output: str) -> None:
 
-    year = yq_pair[0:4]
-    qtr = yq_pair[5:6]
+    year = yyyyqq[0:4]
+    qtr = yyyyqq[5]
 
     # this_file = os.path.basename(__file__).replace('.py', '')
     # log_id = f'{this_file}_{year}{qtr}_{datetime.now().strftime("%Y%m%dT%H%M%S")}'
@@ -115,7 +117,7 @@ def main(formtype: str, yq_pair: str, output_to_local: bool, multiprocess: bool)
     input_params = [{'fid': filing['fid'], 'filename': filing['filename']}
                     for i, filing in filing_idx.iterrows() if i < 10]
 
-    if multiprocess:
+    if Local.MULTIPROCESS_ON:
         cpu_count = mp.cpu_count() if Local.MULTIPROCESS_CPUS is None else Local.MULTIPROCESS_CPUS
         pool = mp.Pool(processes=cpu_count)
         filing_headers = pool.map(extract_filing_header, input_params)
@@ -123,8 +125,27 @@ def main(formtype: str, yq_pair: str, output_to_local: bool, multiprocess: bool)
     else:
         filing_headers = [extract_filing_header(input_param) for input_param in input_params]
 
-    metadata_csv = listofdict_to_csvio(filing_headers)
+    metadata_filestr = list_to_filestr(filing_headers)
 
     # for a given form_type, year, qtr ... upload a single csv file with N filings as rows and header info as cols
     key = f'filing_metadata/formtype={helpers.s3_nameify(formtype)}/year={year}/qtr={qtr}.txt'
-    upload_metadata_csv(key, metadata_csv, output_to_local)
+    upload_metadata_csv(key, metadata_filestr, local_output)
+
+if __name__ == '__main__':
+    # command line arguments
+    parser = argparse.ArgumentParser(description='extract additional metadata (contents within each filing\'s <SEC-HEADER> tags)'
+                                                 ' across all filings within an individual master index file (filtered on a given \'formtype\')')
+    parser.add_argument('yyyyqq', help=f'<yyyyqq> formatted year-quarter pair (eg 202001) to download from edgar',
+                        type=str)
+    parser.add_argument('formtype',help='eg "DEF 14A", "10-K", "10-Q", etc', type=str)
+    parser.add_argument('--local_output', help=f'where to send output on local machine; defaults to \'s3\', which '
+                                               f'uploads to the config.Aws.OUPUT_BUCKET defined in config.py)', type=str, default='s3')
+
+    args = parser.parse_args()
+
+    this_file = os.path.basename(__file__).replace('.py', '')
+    log_id = f'{this_file}_{datetime.now().strftime("%Y%m%dT%H%M%S")}'
+    logging.basicConfig(filename=f'../log/{log_id}.log', level=logging.INFO,
+                        format=f'%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    main(args.yyyyqq, args.formtype, args.local_output)

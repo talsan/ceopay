@@ -140,3 +140,4 @@ def list_s3_keys(session, bucket, prefix='', suffix=''):
                     if key.endswith(suffix):
                         keys.append(content['Key'])
     return keys
+
