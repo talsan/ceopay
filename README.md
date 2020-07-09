@@ -1,11 +1,11 @@
 # SOURCING & STRUCTURING EXECUTIVE COMPENSATION FROM SEC DISCLOSURES
 ### Process Overview
-##### Generalized for any Edgar Document (10-K, 10-Q, DEF 14A, etc.)
+#### Generalized for any Edgar Document (10-K, 10-Q, DEF 14A, etc.)
 1. **Download Master Index Files**: process critical lookup index for each Edgar filing (company name, filing date, filing url, etc.) 
 2. **Extract Filing Headers**: additional filing metadata (contents within filing's `<SEC_HEADER>` tag)
 3. **Download Filings**: in this case, the annual proxy filings (`formtype="DEF 14A"`) 
 
-##### Specific to Executive Compensation (Form DEF 14A)
+#### Specific to Executive Compensation (Form DEF 14A)
 1. **Detect Compensation Table**: Machine Learning algorithms find the compensation table out of 100s of random/noisy tables in the raw DEF14A document
 2. **Parse Table Contents**: Messy and inconsistent raw HTML tables get translated into structured JSON objects with Salary details (total, base, bonus, options, etc.)
 
@@ -35,9 +35,10 @@ optional arguments:
                         where to send output on local machine; defaults to 's3', which uploads to the config.Aws.OUPUT_BUCKET defined in
                         config.py)
 ```
+##### Outputs:
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/masteridx/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/masteridx/year=2020/qtr=1.txt`  
-File Contents Sample: [txt](https://github.com/talsan/ceopay/blob/master/data/masteridx/year%3D2020/qtr%3D2.txt)
+[File Contents Sample] (https://github.com/talsan/ceopay/blob/master/data/masteridx/year%3D2020/qtr%3D2.txt)
 
 #### 2. Extract Filing Header
 ##### `hdr_extractor.py`
@@ -57,6 +58,7 @@ optional arguments:
                         where to send output on local machine; defaults to 's3', which uploads to the config.Aws.OUPUT_BUCKET defined in
                         config.py)
 ```
+##### Outputs:
 S3 naming convention: `<config.Aws.OUPUT_BUCKET>/filing_metadata/formtype=def14a/year=2020/qtr=1.txt`  
 Local naming convention: `./ceopay/data/filing_metadata/formtype=def14a/year=2020/qtr=1.txt`  
-File Contents Sample: [txt](https://github.com/talsan/ceopay/blob/master/data/filing_metadata/formtype%3Ddef14a/year%3D2020/qtr%3D2.txt)
+[File Contents Sample](https://github.com/talsan/ceopay/blob/master/data/filing_metadata/formtype%3Ddef14a/year%3D2020/qtr%3D2.txt)
