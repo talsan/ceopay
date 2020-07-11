@@ -10,9 +10,9 @@
 2. **Parse Table Contents**: Messy and inconsistent raw HTML tables get translated into structured JSON objects with Salary details (total, base, bonus, options, etc.)
 
 #### Features & Options
-- Event-driven design - each process step [1 through 5] is broken out into two scripts:
+- Event-driven design - each process step is broken out into two scripts:
   1. a self-contained event processor (e.g. idx_downloader.py)
-  2. a batch process that queues & invokes a series of events (e.g. batch_idx_downloader.py). Note that the batch process requires (AWS S3/Athena Configuration).
+  2. a batch process that queues-and-invokes a series of events (e.g. batch_idx_downloader.py). 
 - Multiple output options: Local directories or S3
 - Multiprocessing can be toggled on/off via [`config.py`](https://github.com/talsan/ceopay/blob/master/config.py)
 - Designed to work as a script (via CLI) or as an imported module within Python

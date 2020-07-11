@@ -4,7 +4,7 @@ import re
 import boto3
 from ceopay.utils import helpers
 import pandas as pd
-from io import StringIO
+from io import StringIO, BytesIO
 from datetime import datetime
 import multiprocessing as mp
 import logging
@@ -55,15 +55,14 @@ def list_to_filestr(filing_headers: list) -> str:
     return metadata_csv_file.getvalue()
 
 
-def upload_metadata_csv(key: str, filestring: str,  local_output: str) -> None:
-
-    if local_output == 's3':
+def upload_metadata_csv(key: str, filestring: str, outputpath: str) -> None:
+    if outputpath == 's3':
         s3 = session.client('s3')
         s3.put_object(Body=filestring, Bucket=Aws.OUPUT_BUCKET, Key=key)
         log.info(f'pid[{mp.current_process().pid}] wrote {key} to s3')
 
     else:
-        output_path = f'{local_output.rstrip("/")}/{key}'
+        output_path = f'{outputpath.rstrip("/")}/{key}'
         if not os.path.exists(os.path.dirname(output_path)):
             os.makedirs(os.path.dirname(output_path))
         with open(output_path, 'w') as f:
@@ -90,31 +89,26 @@ def extract_filing_header(input_param: dict) -> dict:
     return metadata
 
 
-def get_filing_idx(formtype: str, year: str, qtr: str) -> pd.DataFrame:
-    query_params = {'region': 'us-west-2', 'database': 'qcdb',
-                    'bucket': 'edgaraws-athena-query-outputs', 'path': 'temp',
-                    'query': 'SELECT * FROM edgaraws_masteridx where '
-                             f'FormType=\'{formtype}\' '
-                             f'and year={year} '
-                             f'and quarter={qtr}'}
-    filing_idx = helpers.query_s3_to_df(session, query_params)
+def get_filing_idx(key: str, outputpath: str) -> pd.DataFrame:
+    if outputpath == 's3':
+        s3 = session.client('s3')
+        obj = s3.get_object(Bucket=Aws.OUPUT_BUCKET, Key=key)
+        filing_idx = pd.read_csv(BytesIO(obj['Body'].read()), dtype=str, sep='|')
+    else:
+        if os.path.exists(f'{outputpath.rstrip("/")}/{key}'):
+            filing_idx = pd.read_csv(f'{outputpath}/{key}', sep='|')
+        else:
+            raise Exception('no index data has been downloaded for the header data you\'re reqeusting to download')
+
     return filing_idx
 
 
-def main(yyyyqq: str, formtype: str, local_output: str) -> None:
+def main(yyyyqq: str, formtype: str, outputpath: str) -> None:
+    year, qtr = yyyyqq[0:4], yyyyqq[5]
 
-    year = yyyyqq[0:4]
-    qtr = yyyyqq[5]
+    filing_idx = get_filing_idx(key=f'masteridx/year={year}/qtr={qtr}.txt', outputpath=outputpath)
 
-    # this_file = os.path.basename(__file__).replace('.py', '')
-    # log_id = f'{this_file}_{year}{qtr}_{datetime.now().strftime("%Y%m%dT%H%M%S")}'
-    # logging.basicConfig(filename=f'../log/{log_id}.log', level=logging.INFO,
-    #                     format=f'%(asctime)s - %(name)s - %(levelname)s - {formtype} - %(message)s')
-
-    # for a given form_type, year, and qtr ... get dataframe of N filings as rows and idx metadata as cols
-    filing_idx = get_filing_idx(formtype, year, qtr)
-
-    input_params = [{'fid': filing['fid'], 'filename': filing['filename']}
+    input_params = [{'fid': filing['fid'], 'filename': filing['Filename']}
                     for i, filing in filing_idx.iterrows() if i < 10]
 
     if Local.MULTIPROCESS_ON:
@@ -128,24 +122,26 @@ def main(yyyyqq: str, formtype: str, local_output: str) -> None:
     metadata_filestr = list_to_filestr(filing_headers)
 
     # for a given form_type, year, qtr ... upload a single csv file with N filings as rows and header info as cols
-    key = f'filing_metadata/formtype={helpers.s3_nameify(formtype)}/year={year}/qtr={qtr}.txt'
-    upload_metadata_csv(key, metadata_filestr, local_output)
+    metadata_key = f'filing_metadata/formtype={helpers.s3_nameify(formtype)}/year={year}/qtr={qtr}.txt'
+    upload_metadata_csv(metadata_key, metadata_filestr, outputpath)
+
 
 if __name__ == '__main__':
     # command line arguments
-    parser = argparse.ArgumentParser(description='extract additional metadata (contents within each filing\'s <SEC-HEADER> tags)'
-                                                 ' across all filings within an individual master index file (filtered on a given \'formtype\')')
+    parser = argparse.ArgumentParser(
+        description='extract additional metadata (contents within each filing\'s <SEC-HEADER> tags)'
+                    ' across all filings within an individual master index file (filtered on a given \'formtype\')')
     parser.add_argument('yyyyqq', help=f'<yyyyqq> formatted year-quarter pair (eg 202001) to download from edgar',
                         type=str)
-    parser.add_argument('formtype',help='eg "DEF 14A", "10-K", "10-Q", etc', type=str)
-    parser.add_argument('--local_output', help=f'where to send output on local machine; defaults to \'s3\', which '
-                                               f'uploads to the config.Aws.OUPUT_BUCKET defined in config.py)', type=str, default='s3')
+    parser.add_argument('formtype', help='eg "DEF 14A", "10-K", "10-Q", etc', type=str)
+    parser.add_argument('outputpath', help=f'where to send output on local machine; defaults to \'s3\', which '
+                                           f'uploads to the config.Aws.OUPUT_BUCKET defined in config.py)', type=str)
 
     args = parser.parse_args()
 
     this_file = os.path.basename(__file__).replace('.py', '')
     log_id = f'{this_file}_{datetime.now().strftime("%Y%m%dT%H%M%S")}'
-    logging.basicConfig(filename=f'../log/{log_id}.log', level=logging.INFO,
+    logging.basicConfig(filename=f'./log/{log_id}.log', level=logging.INFO,
                         format=f'%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    main(args.yyyyqq, args.formtype, args.local_output)
+    main(args.yyyyqq, args.formtype, args.outputpath)
