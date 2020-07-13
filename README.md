@@ -10,7 +10,7 @@
 2. **Parse Table Contents**: Messy and inconsistent raw HTML tables get translated into structured JSON objects with Salary details (total, base, bonus, options, etc.)
 
 #### Features & Options
-- Event-driven design - each process step is broken out into two scripts:
+- Decoupled into functional units:
   1. a self-contained event processor (e.g. idx_downloader.py)
   2. a batch process that queues-and-invokes a series of events (e.g. batch_idx_downloader.py). 
 - Multiple output options: Local directories or S3
